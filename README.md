@@ -1,5 +1,5 @@
 # vsfg
-Valgrind Suppresions File Generator
+Valgrind Suppresions File Generator for C or C++
 
 ## documentation about valgrind suppressions
 
@@ -9,8 +9,17 @@ Valgrind Suppresions File Generator
 ## requirements
 
 * zsh
+* mktemp
 * perl
+* valgrind
+* gcc or g++
 
 ## use
 
-./generate_suppresions filename
+./vsfg *<filename>* [language=C]
+
+## example
+
+./vsfg c_supps
+./vsfg c_supps c
+./vsfg c++_supps c++
