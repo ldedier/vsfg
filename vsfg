@@ -1,84 +1,75 @@
 #!/bin/bash
 
+SRC_DIR=srcs
+
 LANGUAGE_C=0
 LANGUAGE_CPP=1
 
+GREEN="\033[32m"
+RED="\033[91m"
+CYAN="\033[36m"
+EOC="\033[39m"
+
 LANGUAGES=(c c++)
 COMPILERS=(gcc g++)
-
-FILE=valgrind.supp
+EXTENSIONS=(.c .cpp)
 
 DEFAULT_LANGUAGE=$LANGUAGE_C
 
 COMPILER=${COMPILERS[$DEFAULT_LANGUAGE]}
 LANGUAGE=${LANGUAGES[$DEFAULT_LANGUAGE]}
+EXTENSION=${EXTENSIONS[$DEFAULT_LANGUAGE]}
 
-function logLanguages {
-	echo "available languages:" 2>&1
-	for lan in "${LANGUAGES[@]}"
-	do
-		echo "	· $lan"	2>&1
-	done
-}
+FILE=valgrind.supp
 
-while [[ $# -gt 0 ]]
-do
-key="$1"
+source $SRC_DIR/vsfg_parser.sh
 
-case $key in
-    -f|--file)
-	if [ $# -lt 2 ] ; then
-		echo "$key requires a filename as argument" 2>&1
+echo "Configuration:
+"
+echo "Filename: $FILE"
+echo "Compiler: $COMPILER"
+if [ ! -z $MAIN ]; then
+	EXT_LEN=${#EXTENSION}
+	if [ ${MAIN: -$EXT_LEN} == "$EXTENSION" ]; then
+		echo "main file: $MAIN"
+	else
+		echo "provided main source ${MAIN} does not have the ${EXTENSION} extension" 2>&1
 		exit 1
 	fi
-    FILE="$2"
-    shift # past argument
-    shift # past value
-    ;;
-    -l|--language)
-	COMPILER="unknown"
-	if [ $# -lt 2 ] ; then
-		echo "$key requires a language as argument" 2>&1
-		echo 2>&1
-		logLanguages
-		exit 1
-	fi
-	LANGUAGE=$2
-	for i in "${!LANGUAGES[@]}";
-	do
-		if [[ "${LANGUAGES[$i]}" = $LANGUAGE ]]; then
-			COMPILER=${COMPILERS[$i]}
-			break
-		fi
-	done
-	if [ $COMPILER = "unknown" ] ; then
-		echo "$LANGUAGE: Unknown language" 2>&1
-		logLanguages
-		exit 1
-	fi
-    shift # past argument
-    shift # past value
-    ;;
-    -h|--help)
-		echo "Usage: $0 [-f/--filename suppressionsFileName] [-l/--language mainLanguage] [-m/--main mainFileName]
+else
+	echo -e "${CYAN}main will be generated automatically !${EOC}"
+	AUTO=1
+	TMP="$(mktemp)"
+	rm $TMP
+	MAIN=${TMP}${EXTENSION}
+	GENERATED_MAIN=$MAIN
+	echo "int main() { return (0); }" > $MAIN
+fi
 
-[-l/--language] valid arguments: {c, c++}"
-		exit 0
-    ;;
-    *)    # unknown option
-		echo "$1: Unknown option" 2>&1
-		exit 1
-    ;;
-esac
-done
-set -- "${POSITIONAL[@]}" # restore positional parameters
+BINARY="__vsfg__empty__binary__"
 
-com='
-empty_binary="$(mktemp)"
-empty_main=".test_empty.c"
-supp_file=".my_supp.supp"
-gcc -o $empty_binary $empty_main
-valgrind --leak-check=full --gen-suppressions=all "./${empty_binary}" 2>&1 | perl .supp_getter.perl > $supp_file
-rm $empty_binary
-rm -rf "${empty_binary}.dSYM"
-'
+$COMPILER -o $BINARY $MAIN
+
+if [ $? -ne 0 ];then
+	echo -e "${RED}Could not compile ${MAIN} with ${COMPILER} compiler${EOC}"
+	exit 1
+fi
+
+valgrind --leak-check=full --gen-suppressions=all "./${BINARY}" 2>&1 | perl srcs/supp_getter.perl > $FILE
+
+if [ $? -eq 0 ]; then
+	if [ ! -z $GENERATED_MAIN ];then
+		echo -e "${GREEN}Generated ${FILE} successfully !"
+	else
+		echo -e "${GREEN}Generated ${FILE} from $MAIN successfully !"
+	fi
+else
+	echo -e "${RED}An error occured${EOC}"
+fi
+
+rm $BINARY
+rm -rf "${BINARY}.dSYM"
+
+if [ ! -z $GENERATED_MAIN ];then
+	rm $GENERATED_MAIN
+fi

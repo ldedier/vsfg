@@ -16,10 +16,20 @@ Valgrind Suppresions File Generator for C or C++
 
 ## use
 
-./vsfg *<filename>* [language=C]
+./vsfg [-f/--file outputFileName] [-l/--language mainLanguage] [-m/--main mainFileName] [-h/--help]
+
+[-l/--language] only valid arguments are:
+
+* c
+* c++
+
+### default:
+
+* outputFileName: valgrind.supp
+* language: c
+* main: *generated automatically*
 
 ## example
 
-./vsfg c_supps
-./vsfg c_supps c
-./vsfg c++_supps c++
+./vsfg --file valgrind_c.supp
+./vsfg --language c++ --main main.cpp --file valgrind_cpp.supp
