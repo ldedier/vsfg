@@ -30,5 +30,5 @@ Valgrind Suppresions File Generator for C or C++
 
 ## example
 
-./vsfg --file valgrind_c.supp
-./vsfg --language c++ --main main.cpp --file valgrind_cpp.supp
+* ./vsfg --file valgrind_c.supp
+* ./vsfg --language c++ --main main.cpp --file valgrind_cpp.supp
