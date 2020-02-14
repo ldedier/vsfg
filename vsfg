@@ -5,6 +5,8 @@ SRC_DIR=srcs
 LANGUAGE_C=0
 LANGUAGE_CPP=1
 
+PWD=`dirname "$0"`
+
 GREEN="\033[32m"
 RED="\033[91m"
 CYAN="\033[36m"
@@ -22,7 +24,7 @@ EXTENSION=${EXTENSIONS[$DEFAULT_LANGUAGE]}
 
 FILE=valgrind.supp
 
-source $SRC_DIR/vsfg_parser.sh
+source $PWD/$SRC_DIR/vsfg_parser.sh
 
 echo "Configuration:
 "
@@ -55,13 +57,13 @@ if [ $? -ne 0 ];then
 	exit 1
 fi
 
-valgrind --leak-check=full --gen-suppressions=all "./${BINARY}" 2>&1 | perl srcs/supp_getter.perl > $FILE
+valgrind --leak-check=full --gen-suppressions=all "./${BINARY}" 2>&1 | perl $PWD/$SRC_DIR/supp_getter.perl > $FILE
 
 if [ $? -eq 0 ]; then
 	if [ ! -z $GENERATED_MAIN ];then
-		echo -e "${GREEN}Generated ${FILE} successfully !"
+		echo -e "${GREEN}Generated ${FILE} successfully !${EOC}"
 	else
-		echo -e "${GREEN}Generated ${FILE} from $MAIN successfully !"
+		echo -e "${GREEN}Generated ${FILE} from $MAIN successfully !${EOC}"
 	fi
 else
 	echo -e "${RED}An error occured${EOC}"
