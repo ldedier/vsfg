@@ -8,7 +8,6 @@ Valgrind Suppresions File Generator for C or C++
 
 ## requirements
 
-* zsh
 * mktemp
 * perl
 * valgrind
